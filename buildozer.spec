@@ -22,7 +22,7 @@ android.presplash_color = #000000
 android.permissions = READ_EXTERNAL_STORAGE,READ_MEDIA_AUDIO
 android.api = 33
 android.minapi = 24
-android.ndk = 23b
+android.ndk = 25b
 android.accept_sdk_license = True
 android.archs = arm64-v8a
 
