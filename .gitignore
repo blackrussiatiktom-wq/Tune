@@ -4,3 +4,5 @@ __pycache__/
 *.pyc
 *.apk
 *.zip
+build.lo
+build.log
