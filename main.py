@@ -9,7 +9,7 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, PROJECT_DIR)
 
 # Файл логов на телефоне
-LOG_FILE = "/storage/emulated/0/tune_crash.log"
+LOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tune_crash.log")
 
 
 def log(msg):

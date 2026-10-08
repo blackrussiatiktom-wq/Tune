@@ -8,7 +8,7 @@ source.include_exts = py,kv,png,jpg,ttf
 source.include_patterns = assets/*,assets/fonts/*,core/*,ui/*
 source.exclude_dirs = tests,bin,.buildozer,__pycache__
 
-version = 0.3.1
+version = 0.3.2
 
 requirements = python3,kivy,mutagen
 
@@ -19,7 +19,7 @@ icon.filename = %(source.dir)s/assets/icon.png
 presplash.filename = %(source.dir)s/assets/icon.png
 android.presplash_color = #000000
 
-android.permissions = READ_EXTERNAL_STORAGE,READ_MEDIA_AUDIO
+android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_AUDIO
 android.api = 31
 android.minapi = 21
 android.ndk = 25b
