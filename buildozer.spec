@@ -4,20 +4,18 @@ package.name = tune
 package.domain = com.tunemusic
 
 source.dir = .
-source.include_exts = py,kv,png,jpg,ttf
-source.include_patterns = assets/*,assets/fonts/*,core/*,ui/*
-source.exclude_dirs = tests,bin,.buildozer,__pycache__
+source.include_exts = py,png,jpg,ttf
+source.include_patterns = assets/*
+source.exclude_dirs = tests,bin,.buildozer,__pycache__,core,ui
 
-version = 0.3.2
+version = 0.3.3
 
-requirements = python3,kivy,mutagen
+requirements = python3,kivy
 
 orientation = portrait
 fullscreen = 0
 
 icon.filename = %(source.dir)s/assets/icon.png
-presplash.filename = %(source.dir)s/assets/icon.png
-android.presplash_color = #000000
 
 android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_AUDIO
 android.api = 31
