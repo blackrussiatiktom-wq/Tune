@@ -8,7 +8,7 @@ source.include_exts = py,kv,png,jpg,ttf
 source.include_patterns = assets/*,assets/fonts/*,core/*,ui/*
 source.exclude_dirs = tests,bin,.buildozer,__pycache__
 
-version = 0.3
+version = 0.3.1
 
 requirements = python3,kivy,mutagen
 
