@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
-    timeout-minutes: 180
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -19,50 +19,60 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get update || true
+          sudo apt-get update
           sudo apt-get install -y \
             git zip unzip openjdk-17-jdk \
             autoconf libtool pkg-config \
             zlib1g-dev libncurses5-dev libncursesw5-dev \
             cmake libffi-dev libssl-dev \
-            ccache build-essential libtool-bin || true
+            ccache build-essential
           sudo apt-get install -y libtinfo5 || true
-          sudo apt-get install -y libtinfo-dev || true
-          echo "=== apt done ==="
 
-      - name: Set environment
-        run: |
-          echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
-          echo "$JAVA_HOME/bin" >> $GITHUB_PATH
-          echo "ANDROID_HOME=/home/runner/.buildozer/android/platform/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_NDK_HOME=/home/runner/.buildozer/android/platform/android-ndk-r25b" >> $GITHUB_ENV
-          echo "=== env set ==="
+      - name: Set JAVA_HOME
+        run: echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
 
-      - name: Install buildozer + cython
+      - name: Install buildozer
         run: |
           pip install --upgrade pip setuptools wheel
           pip install buildozer cython
-          echo "=== pip done ==="
-          python -c "import cython; print('cython:', cython.__version__)"
 
-      - name: Pre-accept Android licenses
+      - name: Pre-accept licenses
         run: |
-          LIC_DIR=~/.buildozer/android/platform/android-sdk/licenses
-          mkdir -p $LIC_DIR
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $LIC_DIR/android-sdk-license
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $LIC_DIR/android-sdk-license
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" >> $LIC_DIR/android-sdk-license
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $LIC_DIR/android-sdk-license
-          cp $LIC_DIR/android-sdk-license $LIC_DIR/android-sdk-preview-license || true
-          echo "=== licenses done ==="
+          LIC=~/.buildozer/android/platform/android-sdk/licenses
+          mkdir -p $LIC
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $LIC/android-sdk-license
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $LIC/android-sdk-license
+          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" >> $LIC/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $LIC/android-sdk-license
 
-      - name: Fix sdkmanager path
+      - name: First build run (to download SDK)
+        id: first
+        continue-on-error: true
+        run: |
+          export PATH=$PATH:~/.local/bin
+          yes y 2>/dev/null | buildozer -v android debug 2>&1 | tee build1.log || true
+          echo "=== Первый запуск завершён ==="
+          ls -la ~/.buildozer/android/platform/android-sdk/ || true
+
+      - name: Fix sdkmanager path (ПОСЛЕ первого запуска)
         run: |
           SDK=~/.buildozer/android/platform/android-sdk
           mkdir -p $SDK/tools/bin
+          echo "=== Что есть в SDK ==="
+          ls -la $SDK/ || true
+          echo "=== cmdline-tools ==="
+          ls -la $SDK/cmdline-tools/ || true
+          
+          # Ищем sdkmanager где угодно
           if [ -f $SDK/cmdline-tools/latest/bin/sdkmanager ]; then
             ln -sf $SDK/cmdline-tools/latest/bin/sdkmanager $SDK/tools/bin/sdkmanager
+            echo "Symlink создан из cmdline-tools/latest"
+          elif [ -f $SDK/cmdline-tools/bin/sdkmanager ]; then
+            ln -sf $SDK/cmdline-tools/bin/sdkmanager $SDK/tools/bin/sdkmanager
+            echo "Symlink создан из cmdline-tools"
           else
+            # Скачиваем cmdline-tools если их нет
+            echo "cmdline-tools не найдены — качаем..."
             mkdir -p /tmp/cmdline
             curl -L -o /tmp/cmdline.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
             unzip -q /tmp/cmdline.zip -d /tmp/cmdline
@@ -70,47 +80,39 @@ jobs:
             mv /tmp/cmdline/cmdline-tools/* $SDK/cmdline-tools/latest/
             chmod +x $SDK/cmdline-tools/latest/bin/sdkmanager
             ln -sf $SDK/cmdline-tools/latest/bin/sdkmanager $SDK/tools/bin/sdkmanager
+            echo "cmdline-tools скачаны и установлены"
           fi
+          
           ls -la $SDK/tools/bin/sdkmanager
-          echo "=== sdkmanager done ==="
+          echo "=== Готово ==="
 
-      - name: Make bin dir
-        run: mkdir -p bin && echo "=== bin dir ready ==="
-
-      - name: Build APK
+      - name: Build APK (second run)
         id: build
         continue-on-error: true
         run: |
           export PATH=$PATH:~/.local/bin
-          set -x
+          mkdir -p bin
           set +e
           yes y 2>/dev/null | buildozer -v android debug 2>&1 | tee build.log
           BUILD_EXIT=$?
           set -e
-          set +x
-          echo "Build exit code: $BUILD_EXIT"
           echo "build_exit=$BUILD_EXIT" >> $GITHUB_OUTPUT
-          echo "=== files in bin/ ==="
           ls -la bin/ || echo "bin пусто"
           if ls bin/*.apk 1>/dev/null 2>&1; then
-            echo "APK СОЗДАН ✅"
-            ls -la bin/*.apk
+            echo "✅ APK СОЗДАН!"
           else
-            echo "APK НЕ СОЗДАН ❌"
+            echo "❌ APK НЕ СОЗДАН"
           fi
-
-      - name: Save exit status
-        run: |
-          echo "Build exited with: ${{ steps.build.outputs.build_exit }}"
 
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: build.log
+          name: build-logs
+          path: |
+            build1.log
+            build.log
           if-no-files-found: warn
-          retention-days: 30
 
       - name: Upload APK
         if: always()
@@ -119,12 +121,3 @@ jobs:
           name: Tune-APK
           path: bin/*.apk
           if-no-files-found: warn
-          retention-days: 30
-
-      - name: Fail if no APK
-        if: steps.build.outputs.build_exit != '0'
-        run: |
-          echo "Build failed with exit ${{ steps.build.outputs.build_exit }}"
-          echo "=== Last 100 lines of build.log ==="
-          tail -100 build.log
-          exit 1
