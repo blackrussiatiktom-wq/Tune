@@ -27,7 +27,6 @@ android.archs = arm64-v8a
 android.allow_backup = True
 
 p4a.branch = master
-p4a.extra_args = --jobs=1
 
 [buildozer]
 log_level = 2
