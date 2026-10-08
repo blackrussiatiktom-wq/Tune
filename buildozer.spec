@@ -4,11 +4,11 @@ package.name = tune
 package.domain = com.tunemusic
 
 source.dir = .
-source.include_exts = py,kv,png,jpg,ttf
-source.include_patterns = assets/*,assets/fonts/*,core/*,ui/*
-source.exclude_dirs = tests,bin,.buildozer,__pycache__
+source.include_exts = py,png,jpg
+source.include_patterns = assets/*,core/*
+source.exclude_dirs = tests,bin,.buildozer,__pycache__,ui
 
-version = 0.3.5
+version = 0.3.6
 requirements = python3,kivy,mutagen
 
 orientation = portrait
