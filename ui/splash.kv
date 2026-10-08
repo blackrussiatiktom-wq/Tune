@@ -21,17 +21,14 @@
 
         Label:
             text: "Tune"
-            font_name: "Inter-Bold"
             font_size: "48sp"
             color: 1, 1, 1, 1
             size_hint_y: None
             height: dp(70)
             pos_hint: {"center_x": 0.5}
-            markup: True
 
         Label:
             text: "Твоя музыка всегда с тобой"
-            font_name: "Inter-Regular"
             font_size: "16sp"
             color: 0.55, 0.55, 0.68, 1
             size_hint_y: None
@@ -40,35 +37,8 @@
 
         Widget:
 
-        # Прогресс-бар
-        BoxLayout:
-            size_hint: (0.6, None)
-            height: dp(6)
-            pos_hint: {"center_x": 0.5}
-
-            canvas:
-                Color:
-                    rgba: 0.15, 0.15, 0.2, 1
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [dp(3)]
-
-            Widget:
-                id: progress_fill
-                size_hint_x: 0.01  # будет меняться
-
-                canvas.before:
-                    Color:
-                        rgba: 0.48, 0.24, 1, 1
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [dp(3)]
-
         Label:
             text: "Загрузка..."
-            font_name: "Inter-Regular"
             font_size: "14sp"
             color: 0.55, 0.55, 0.68, 1
             size_hint_y: None

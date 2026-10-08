@@ -4,17 +4,15 @@ package.name = tune
 package.domain = com.tunemusic
 
 source.dir = .
-source.include_exts = py,png,jpg,ttf
-source.include_patterns = assets/*
-source.exclude_dirs = tests,bin,.buildozer,__pycache__,core,ui
+source.include_exts = py,kv,png,jpg,ttf
+source.include_patterns = assets/*,assets/fonts/*,core/*,ui/*
+source.exclude_dirs = tests,bin,.buildozer,__pycache__
 
-version = 0.3.3
-
-requirements = python3,kivy
+version = 0.3.5
+requirements = python3,kivy,mutagen
 
 orientation = portrait
 fullscreen = 0
-
 icon.filename = %(source.dir)s/assets/icon.png
 
 android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_AUDIO
@@ -23,9 +21,7 @@ android.minapi = 21
 android.ndk = 25b
 android.accept_sdk_license = True
 android.archs = arm64-v8a
-
 android.allow_backup = True
-
 p4a.branch = master
 
 [buildozer]

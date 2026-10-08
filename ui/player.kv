@@ -11,217 +11,67 @@
         padding: (dp(20), dp(12))
         spacing: dp(16)
 
-        # HEADER
         BoxLayout:
             size_hint_y: None
             height: dp(44)
 
             Button:
-                text: "⌄"
-                font_size: "32sp"
+                text: "Назад"
                 size_hint: (None, 1)
-                width: dp(44)
+                width: dp(100)
                 background_normal: ""
-                background_color: 0, 0, 0, 0
-                color: 0.7, 0.7, 0.78, 1
+                background_color: 0.1, 0.1, 0.15, 1
+                color: 1, 1, 1, 1
                 on_release: root.go_back()
 
             Label:
-                text: "Tune ✦"
-                font_name: "Inter-Bold"
+                text: "Плеер"
                 font_size: "22sp"
                 color: 1, 1, 1, 1
 
-            Button:
-                text: "⋮"
-                font_size: "28sp"
-                size_hint: (None, 1)
-                width: dp(44)
-                background_normal: ""
-                background_color: 0, 0, 0, 0
-                color: 0.7, 0.7, 0.78, 1
+        Image:
+            source: "assets/icon.png"
+            size_hint: (1, 0.5)
 
-        # COVER
-        BoxLayout:
+        Label:
+            id: player_title
+            text: "Название трека"
+            font_size: "22sp"
+            color: 1, 1, 1, 1
             size_hint_y: None
-            height: self.width
+            height: dp(40)
 
-            Image:
-                id: cover_image
-                source: "assets/icon.png"
-                size_hint: (0.9, 0.9)
-                pos_hint: {"center_x": 0.5, "center_y": 0.5}
-                allow_stretch: True
-                keep_ratio: True
-
-        # TITLE + ARTIST
-        BoxLayout:
-            size_hint_y: None
-            height: dp(70)
-
-            BoxLayout:
-                orientation: "vertical"
-                padding: (dp(8), 0)
-
-                Label:
-                    id: player_title
-                    text: "Название трека"
-                    font_name: "Inter-Bold"
-                    font_size: "22sp"
-                    color: 1, 1, 1, 1
-                    halign: "left"
-                    valign: "middle"
-                    text_size: self.size
-
-                Label:
-                    id: player_artist
-                    text: "Артист"
-                    font_name: "Inter-Regular"
-                    font_size: "15sp"
-                    color: 0.55, 0.55, 0.68, 1
-                    halign: "left"
-                    valign: "middle"
-                    text_size: self.size
-
-            Button:
-                id: heart_btn
-                text: "♡"
-                font_size: "28sp"
-                size_hint: (None, 1)
-                width: dp(50)
-                background_normal: ""
-                background_color: 0, 0, 0, 0
-                color: 0.7, 0.7, 0.78, 1
-
-        # PROGRESS BAR
-        BoxLayout:
+        Label:
+            id: player_artist
+            text: "Артист"
+            font_size: "15sp"
+            color: 0.55, 0.55, 0.68, 1
             size_hint_y: None
             height: dp(30)
-            padding: (dp(8), dp(8))
 
-            canvas:
-                Color:
-                    rgba: 0.15, 0.15, 0.2, 1
-                Rectangle:
-                    pos: self.x + dp(8), self.y + dp(8)
-                    size: self.width - dp(16), dp(3)
-
-                Color:
-                    rgba: 0.48, 0.24, 1, 1
-                Rectangle:
-                    pos: self.x + dp(8), self.y + dp(8)
-                    size: (self.width - dp(16)) * (root.progress if root.progress else 0), dp(3)
-
-        # TIME
         BoxLayout:
             size_hint_y: None
-            height: dp(20)
-            padding: (dp(8), 0)
-
-            Label:
-                id: time_current
-                text: "0:00"
-                font_name: "Inter-Medium"
-                font_size: "13sp"
-                color: 0.55, 0.55, 0.68, 1
-                halign: "left"
-                valign: "middle"
-                text_size: self.size
-
-            Label:
-                id: time_total
-                text: "0:00"
-                font_name: "Inter-Medium"
-                font_size: "13sp"
-                color: 0.55, 0.55, 0.68, 1
-                halign: "right"
-                valign: "middle"
-                text_size: self.size
-
-        # CONTROLS
-        BoxLayout:
-            size_hint_y: None
-            height: dp(90)
+            height: dp(80)
             spacing: dp(8)
 
             Button:
-                id: shuffle_btn
-                text: "🔀"
-                font_size: "24sp"
+                text: "Prev"
+                font_size: "18sp"
                 background_normal: ""
-                background_color: 0, 0, 0, 0
-                color: 0.48, 0.24, 1, 1
+                background_color: 0.15, 0.15, 0.2, 1
+                color: 1, 1, 1, 1
 
             Button:
-                id: prev_btn
-                text: "⏮"
-                font_size: "32sp"
+                text: "Play"
+                font_size: "18sp"
                 background_normal: ""
-                background_color: 0, 0, 0, 0
+                background_color: 0.48, 0.24, 1, 1
                 color: 1, 1, 1, 1
-                on_release: root.prev_track()
-
-            Button:
-                id: play_btn
-                text: "▶"
-                font_size: "36sp"
-                background_normal: ""
-                background_color: 0, 0, 0, 0
-                color: 1, 1, 1, 1
-                canvas.before:
-                    Color:
-                        rgba: 0.48, 0.24, 1, 1
-                    Line:
-                        circle: self.center_x, self.center_y, dp(38)
-                        width: dp(2)
                 on_release: root.toggle_play()
 
             Button:
-                id: next_btn
-                text: "⏭"
-                font_size: "32sp"
+                text: "Next"
+                font_size: "18sp"
                 background_normal: ""
-                background_color: 0, 0, 0, 0
+                background_color: 0.15, 0.15, 0.2, 1
                 color: 1, 1, 1, 1
-                on_release: root.next_track()
-
-            Button:
-                id: repeat_btn
-                text: "🔁"
-                font_size: "24sp"
-                background_normal: ""
-                background_color: 0, 0, 0, 0
-                color: 0.48, 0.24, 1, 1
-
-        # BOTTOM BAR
-        BoxLayout:
-            size_hint_y: None
-            height: dp(50)
-
-            Button:
-                text: "🎧  Офлайн"
-                font_name: "Inter-Medium"
-                font_size: "13sp"
-                background_normal: ""
-                background_color: 0.06, 0.06, 0.09, 1
-                color: 1, 1, 1, 1
-
-            Widget:
-
-            Button:
-                text: "🎵"
-                font_size: "22sp"
-                size_hint_x: None
-                width: dp(50)
-                background_normal: ""
-                background_color: 0, 0, 0, 0
-                color: 0.7, 0.7, 0.78, 1
-
-            Button:
-                text: "🔊"
-                font_size: "22sp"
-                size_hint_x: None
-                width: dp(50)
-                background_normal: ""
-                background_color: 0, 0, 0, 0
-                color: 0.7, 0.7, 0.78, 1
