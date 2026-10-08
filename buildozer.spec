@@ -5,18 +5,19 @@ package.domain = com.tunemusic
 
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
-source.include_patterns = assets/*
-source.exclude_dirs = tests,bin,.buildozer,__pycache__,core
+source.include_patterns = assets/*,core/*
+source.exclude_dirs = tests,bin,.buildozer,__pycache__
 
 version = 0.1
 
-requirements = python3,kivy
+requirements = python3,kivy,mutagen,pyjnius,android
 
 orientation = portrait
 fullscreen = 0
 
 icon.filename = %(source.dir)s/assets/icon.png
 
+android.permissions = READ_EXTERNAL_STORAGE,READ_MEDIA_AUDIO
 android.api = 31
 android.minapi = 21
 android.ndk = 25b

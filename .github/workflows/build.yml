@@ -12,15 +12,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.9
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.9'
 
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
+          sudo apt-get install -y --no-install-recommends \
             git zip unzip openjdk-17-jdk \
             autoconf libtool pkg-config \
             zlib1g-dev libncurses5-dev libncursesw5-dev \
@@ -31,62 +31,40 @@ jobs:
       - name: Set JAVA_HOME
         run: echo "JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64" >> $GITHUB_ENV
 
-      - name: Install buildozer
+      - name: Install buildozer (compatible versions)
         run: |
           pip install --upgrade pip setuptools wheel
-          pip install buildozer cython
+          pip install buildozer "cython<3.0"
+          pip install "virtualenv"
 
-      - name: Pre-accept licenses
-        run: |
-          LIC=~/.buildozer/android/platform/android-sdk/licenses
-          mkdir -p $LIC
-          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $LIC/android-sdk-license
-          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $LIC/android-sdk-license
-          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" >> $LIC/android-sdk-license
-          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $LIC/android-sdk-license
-
-      - name: First build run (to download SDK)
-        id: first
-        continue-on-error: true
-        run: |
-          export PATH=$PATH:~/.local/bin
-          yes y 2>/dev/null | buildozer -v android debug 2>&1 | tee build1.log || true
-          echo "=== Первый запуск завершён ==="
-          ls -la ~/.buildozer/android/platform/android-sdk/ || true
-
-      - name: Fix sdkmanager path (ПОСЛЕ первого запуска)
+      - name: Download Android cmdline-tools directly
         run: |
           SDK=~/.buildozer/android/platform/android-sdk
           mkdir -p $SDK/tools/bin
-          echo "=== Что есть в SDK ==="
-          ls -la $SDK/ || true
-          echo "=== cmdline-tools ==="
-          ls -la $SDK/cmdline-tools/ || true
+          mkdir -p $SDK/cmdline-tools/latest
+          mkdir -p $SDK/licenses
           
-          # Ищем sdkmanager где угодно
-          if [ -f $SDK/cmdline-tools/latest/bin/sdkmanager ]; then
-            ln -sf $SDK/cmdline-tools/latest/bin/sdkmanager $SDK/tools/bin/sdkmanager
-            echo "Symlink создан из cmdline-tools/latest"
-          elif [ -f $SDK/cmdline-tools/bin/sdkmanager ]; then
-            ln -sf $SDK/cmdline-tools/bin/sdkmanager $SDK/tools/bin/sdkmanager
-            echo "Symlink создан из cmdline-tools"
-          else
-            # Скачиваем cmdline-tools если их нет
-            echo "cmdline-tools не найдены — качаем..."
-            mkdir -p /tmp/cmdline
-            curl -L -o /tmp/cmdline.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
-            unzip -q /tmp/cmdline.zip -d /tmp/cmdline
-            mkdir -p $SDK/cmdline-tools/latest
-            mv /tmp/cmdline/cmdline-tools/* $SDK/cmdline-tools/latest/
-            chmod +x $SDK/cmdline-tools/latest/bin/sdkmanager
-            ln -sf $SDK/cmdline-tools/latest/bin/sdkmanager $SDK/tools/bin/sdkmanager
-            echo "cmdline-tools скачаны и установлены"
-          fi
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $SDK/licenses/android-sdk-license
+          echo "d56f5187479451eabf01fb78af6dfcb131a6481e" >> $SDK/licenses/android-sdk-license
+          echo "8933bad161af4178b1185d1a37fbf41ea5269c55" >> $SDK/licenses/android-sdk-license
+          echo "84831b9409646a918e30573bab4c9c91346d8abd" >> $SDK/licenses/android-sdk-license
+          
+          mkdir -p /tmp/cmdline
+          curl -L -o /tmp/cmdline.zip "https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
+          unzip -q /tmp/cmdline.zip -d /tmp/cmdline
+          mv /tmp/cmdline/cmdline-tools/* $SDK/cmdline-tools/latest/
+          chmod +x $SDK/cmdline-tools/latest/bin/sdkmanager
+          ln -sf $SDK/cmdline-tools/latest/bin/sdkmanager $SDK/tools/bin/sdkmanager
           
           ls -la $SDK/tools/bin/sdkmanager
-          echo "=== Готово ==="
 
-      - name: Build APK (second run)
+      - name: Clear cache
+        run: |
+          rm -rf ~/.buildozer/android/platform/build-*
+          rm -rf ~/.buildozer/android/platform/python-for-android
+          echo "Cache cleaned"
+
+      - name: Build APK
         id: build
         continue-on-error: true
         run: |
@@ -99,9 +77,9 @@ jobs:
           echo "build_exit=$BUILD_EXIT" >> $GITHUB_OUTPUT
           ls -la bin/ || echo "bin пусто"
           if ls bin/*.apk 1>/dev/null 2>&1; then
-            echo "✅ APK СОЗДАН!"
+            echo "APK СОЗДАН"
           else
-            echo "❌ APK НЕ СОЗДАН"
+            echo "APK НЕ СОЗДАН"
           fi
 
       - name: Upload build log
@@ -109,9 +87,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
-          path: |
-            build1.log
-            build.log
+          path: build.log
           if-no-files-found: warn
 
       - name: Upload APK
