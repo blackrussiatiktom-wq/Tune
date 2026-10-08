@@ -1,247 +1,337 @@
 """Tune v0.3 - офлайн музыкальный плеер"""
 import os
 import sys
+import traceback
+from datetime import datetime
 
-# Добавляем путь проекта
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Путь проекта
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, PROJECT_DIR)
 
-from kivy.app import App
-from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from kivy.clock import Clock
-from kivy.core.window import Window
-from kivy.lang import Builder
-from kivy.metrics import dp
-
-from core.theme import Theme
-from core.scanner import scan, filename_only
-from core.metadata import read_tags, fmt_time, is_hidden
-from core.player import Player
-from ui.widgets import TrackItem
+# Файл логов на телефоне
+LOG_FILE = "/storage/emulated/0/tune_crash.log"
 
 
-# Подключаем .kv файлы
-KV_FILES = [
-    "ui/splash.kv",
-    "ui/home.kv",
-    "ui/player.kv",
-]
+def log(msg):
+    """Пишет в файл лога на телефоне"""
+    try:
+        with open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(f"[{datetime.now()}] {msg}\n")
+    except Exception:
+        pass
+
+
+def log_exception(where):
+    """Логирует исключение"""
+    log(f"\n=== ОШИБКА в {where} ===\n{traceback.format_exc()}\n")
+
+
+# Логируем старт
+try:
+    os.remove(LOG_FILE)
+except Exception:
+    pass
+log("=== ЗАПУСК TUNE v0.3 ===")
+log(f"PROJECT_DIR = {PROJECT_DIR}")
+log(f"sys.path = {sys.path[:3]}")
+
+# Импортируем Kivy
+try:
+    from kivy.app import App
+    from kivy.uix.screenmanager import ScreenManager, Screen, FadeTransition
+    from kivy.uix.boxlayout import BoxLayout
+    from kivy.uix.label import Label
+    from kivy.uix.button import Button
+    from kivy.clock import Clock
+    from kivy.core.window import Window
+    from kivy.lang import Builder
+    from kivy.metrics import dp
+    log("Kivy импортирован OK")
+except Exception:
+    log_exception("import kivy")
+    raise
+
+# Импортируем наши модули
+try:
+    from core.theme import Theme
+    from core.scanner import scan, filename_only
+    from core.metadata import read_tags, fmt_time, is_hidden
+    from core.player import Player
+    from ui.widgets import TrackItem
+    log("Наши модули импортированы OK")
+except Exception:
+    log_exception("import core/ui")
+    raise
+
+
+# Регистрируем шрифты СРАЗУ
+try:
+    Theme.register_fonts()
+    log("Шрифты Inter зарегистрированы")
+except Exception:
+    log_exception("register_fonts")
+
+
+# Загружаем .kv файлы
+KV_FILES = ["ui/splash.kv", "ui/home.kv", "ui/player.kv"]
 for kv in KV_FILES:
-    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), kv)
-    if os.path.exists(path):
-        Builder.load_file(path)
-    else:
-        Builder.load_file(kv)
+    try:
+        path = os.path.join(PROJECT_DIR, kv)
+        if os.path.exists(path):
+            Builder.load_file(path)
+            log(f"KV загружен: {kv}")
+        else:
+            log(f"KV НЕ НАЙДЕН: {path}")
+    except Exception:
+        log_exception(f"load {kv}")
 
 
 class SplashScreen(Screen):
     def start_loading(self):
-        """Анимация прогресс-бара + загрузка треков"""
-        progress_fill = self.ids.get("progress_fill")
-        if not progress_fill:
-            return
+        try:
+            progress_fill = self.ids.get("progress_fill")
+            if not progress_fill:
+                log("progress_fill не найден — пропускаем анимацию")
+                Clock.schedule_once(lambda d: self.go_home(), 2.0)
+                return
 
-        # Анимация 0 -> 1 за 2.5 сек
-        steps = [i / 50.0 for i in range(51)]
+            steps = [i / 50.0 for i in range(51)]
 
-        def animate(dt, step=0):
-            if step < len(steps):
-                progress_fill.size_hint_x = max(0.01, steps[step])
-                Clock.schedule_once(lambda d: animate(d, step + 1), 0.05)
-            else:
-                # Готово - переходим на главный
-                Clock.schedule_once(lambda d: self.go_home(), 0.2)
+            def animate(dt, step=0):
+                if step < len(steps):
+                    progress_fill.size_hint_x = max(0.01, steps[step])
+                    Clock.schedule_once(lambda d: animate(d, step + 1), 0.05)
+                else:
+                    Clock.schedule_once(lambda d: self.go_home(), 0.2)
 
-        animate(0)
+            animate(0)
+        except Exception:
+            log_exception("SplashScreen.start_loading")
+            Clock.schedule_once(lambda d: self.go_home(), 1.0)
 
     def go_home(self):
-        app = App.get_running_app()
-        app.sm.current = "home"
+        try:
+            app = App.get_running_app()
+            app.sm.current = "home"
+        except Exception:
+            log_exception("go_home")
 
 
 class HomeScreen(Screen):
     def on_enter(self, *args):
-        """Загружаем список треков"""
-        Clock.schedule_once(self.load_tracks, 0.1)
+        try:
+            Clock.schedule_once(self.load_tracks, 0.1)
+        except Exception:
+            log_exception("HomeScreen.on_enter")
 
     def load_tracks(self, *args):
-        tracks_box = self.ids.get("tracks_box")
-        if not tracks_box:
-            return
-        tracks_box.clear_widgets()
+        try:
+            log("Начинаем загрузку треков...")
+            tracks_box = self.ids.get("tracks_box")
+            if not tracks_box:
+                log("tracks_box не найден!")
+                return
 
-        paths = scan()
-        app = App.get_running_app()
-        app.tracks = []
+            tracks_box.clear_widgets()
+            paths = scan()
+            log(f"Найдено файлов: {len(paths)}")
 
-        for path in paths:
-            if is_hidden(path):
-                continue
-            info = read_tags(path)
-            app.tracks.append(info)
+            app = App.get_running_app()
+            app.tracks = []
 
-            item = TrackItem(
-                title=info["title"],
-                artist=info["artist"],
-                duration=fmt_time(info["duration"]),
-            )
-            item.bind(on_release=lambda inst, p=path: app.play_track(p))
-            tracks_box.add_widget(item)
+            for i, path in enumerate(paths):
+                try:
+                    if is_hidden(path):
+                        continue
+                    info = read_tags(path)
+                    app.tracks.append(info)
 
-        # Обновляем mini-player
-        mini_title = self.ids.get("mini_title")
-        if mini_title:
-            if app.tracks:
-                mini_title.text = f"Найдено {len(app.tracks)} треков"
-            else:
-                mini_title.text = "Треки не найдены"
+                    item = TrackItem(
+                        title=info["title"],
+                        artist=info["artist"],
+                        duration=fmt_time(info["duration"]),
+                    )
+                    item.bind(on_release=lambda inst, p=path: app.play_track(p))
+                    tracks_box.add_widget(item)
+                except Exception:
+                    log_exception(f"load track #{i}: {path}")
+
+            log(f"Треков добавлено: {len(app.tracks)}")
+
+            mini_title = self.ids.get("mini_title")
+            if mini_title:
+                if app.tracks:
+                    mini_title.text = f"Найдено {len(app.tracks)} треков"
+                else:
+                    mini_title.text = "Треки не найдены"
+        except Exception:
+            log_exception("HomeScreen.load_tracks")
 
     def toggle_play(self, *args):
-        """Play/Pause из мини-плеера"""
-        app = App.get_running_app()
-        if app.player.current_path:
-            playing = app.player.toggle()
-            btn = self.ids.get("mini_play_btn")
-            if btn:
-                btn.text = "⏸" if playing else "▶"
+        try:
+            app = App.get_running_app()
+            if app.player.current_path:
+                playing = app.player.toggle()
+                btn = self.ids.get("mini_play_btn")
+                if btn:
+                    btn.text = "⏸" if playing else "▶"
+        except Exception:
+            log_exception("toggle_play")
 
 
 class PlayerScreen(Screen):
     progress = 0.0
 
     def on_enter(self, *args):
-        """Обновляем UI плеера"""
-        self.update_ui()
-        # Таймер обновления прогресса
-        Clock.schedule_interval(self.update_progress, 0.5)
+        try:
+            self.update_ui()
+            Clock.schedule_interval(self.update_progress, 0.5)
+        except Exception:
+            log_exception("PlayerScreen.on_enter")
 
     def on_leave(self, *args):
-        Clock.unschedule(self.update_progress)
+        try:
+            Clock.unschedule(self.update_progress)
+        except Exception:
+            pass
 
     def update_ui(self):
-        app = App.get_running_app()
-        info = app.current_track
-        if not info:
-            return
-
-        title = self.ids.get("player_title")
-        artist = self.ids.get("player_artist")
-        total = self.ids.get("time_total")
-
-        if title:
-            title.text = info.get("title", "Без названия")
-        if artist:
-            artist.text = info.get("artist", "Неизвестен")
-        if total:
-            total.text = fmt_time(info.get("duration", 0))
-
-        # Кнопка Play/Pause
-        play_btn = self.ids.get("play_btn")
-        if play_btn:
-            play_btn.text = "⏸" if app.player.is_playing else "▶"
+        try:
+            app = App.get_running_app()
+            info = app.current_track
+            if not info:
+                return
+            title = self.ids.get("player_title")
+            artist = self.ids.get("player_artist")
+            total = self.ids.get("time_total")
+            if title:
+                title.text = info.get("title", "Без названия")
+            if artist:
+                artist.text = info.get("artist", "Неизвестен")
+            if total:
+                total.text = fmt_time(info.get("duration", 0))
+            play_btn = self.ids.get("play_btn")
+            if play_btn:
+                play_btn.text = "⏸" if app.player.is_playing else "▶"
+        except Exception:
+            log_exception("PlayerScreen.update_ui")
 
     def update_progress(self, dt):
-        """Обновляет прогресс-бар"""
-        app = App.get_running_app()
-        if not app.player.sound:
-            return
-
-        pos = app.player.get_position()
-        dur = app.player.get_duration()
-
-        if dur > 0:
-            self.progress = pos / dur
-        else:
-            self.progress = 0
-
-        time_cur = self.ids.get("time_current")
-        if time_cur:
-            time_cur.text = fmt_time(pos)
+        try:
+            app = App.get_running_app()
+            if not app.player.sound:
+                return
+            pos = app.player.get_position()
+            dur = app.player.get_duration()
+            if dur > 0:
+                self.progress = pos / dur
+            time_cur = self.ids.get("time_current")
+            if time_cur:
+                time_cur.text = fmt_time(pos)
+        except Exception:
+            pass
 
     def toggle_play(self, *args):
-        app = App.get_running_app()
-        playing = app.player.toggle()
-        play_btn = self.ids.get("play_btn")
-        if play_btn:
-            play_btn.text = "⏸" if playing else "▶"
+        try:
+            app = App.get_running_app()
+            playing = app.player.toggle()
+            play_btn = self.ids.get("play_btn")
+            if play_btn:
+                play_btn.text = "⏸" if playing else "▶"
+        except Exception:
+            log_exception("PlayerScreen.toggle_play")
 
     def next_track(self, *args):
-        App.get_running_app().play_next()
+        try:
+            App.get_running_app().play_next()
+        except Exception:
+            log_exception("next_track")
 
     def prev_track(self, *args):
-        App.get_running_app().play_prev()
+        try:
+            App.get_running_app().play_prev()
+        except Exception:
+            log_exception("prev_track")
 
     def go_back(self, *args):
-        App.get_running_app().sm.current = "home"
+        try:
+            App.get_running_app().sm.current = "home"
+        except Exception:
+            log_exception("go_back")
 
 
 class TuneApp(App):
     def build(self):
-        # Регистрируем шрифты
-        Theme.register_fonts()
+        try:
+            log("TuneApp.build() начался")
+            Window.clearcolor = (0, 0, 0, 1)
+            self.title = "Tune"
+            self.tracks = []
+            self.current_index = -1
+            self.current_track = None
+            self.player = Player()
 
-        # Чёрный фон окна
-        Window.clearcolor = (0, 0, 0, 1)
+            log("Создаём ScreenManager")
+            self.sm = ScreenManager(transition=FadeTransition())
+            self.sm.add_widget(SplashScreen(name="splash"))
+            self.sm.add_widget(HomeScreen(name="home"))
+            self.sm.add_widget(PlayerScreen(name="player"))
 
-        self.title = "Tune"
-        self.tracks = []
-        self.current_index = -1
-        self.current_track = None
-        self.player = Player()
+            log("ScreenManager готов")
+            Clock.schedule_once(
+                lambda dt: self.sm.get_screen("splash").start_loading(), 0.5
+            )
+            log("TuneApp.build() завершён OK")
+            return self.sm
+        except Exception:
+            log_exception("TuneApp.build")
+            raise
 
-        # ScreenManager
-        self.sm = ScreenManager(transition=FadeTransition())
-        self.sm.add_widget(SplashScreen(name="splash"))
-        self.sm.add_widget(HomeScreen(name="home"))
-        self.sm.add_widget(PlayerScreen(name="player"))
-
-        # После сборки - стартуем загрузку
-        Clock.schedule_once(lambda dt: self.sm.get_screen("splash").start_loading(), 0.5)
-
-        return self.sm
+    def on_start(self):
+        log("TuneApp.on_start() — приложение запущено")
 
     def play_track(self, path):
-        """Воспроизвести трек"""
-        # Находим индекс
-        for i, t in enumerate(self.tracks):
-            if t["path"] == path:
-                self.current_index = i
-                self.current_track = t
-                break
-
-        if self.player.play(path):
-            self.player.set_on_finish(self._on_track_finish)
-            # Обновляем мини-плеер
-            mini_title = self.sm.get_screen("home").ids.get("mini_title")
-            mini_artist = self.sm.get_screen("home").ids.get("mini_artist")
-            mini_btn = self.sm.get_screen("home").ids.get("mini_play_btn")
-            if mini_title:
-                mini_title.text = self.current_track.get("title", "")
-            if mini_artist:
-                mini_artist.text = self.current_track.get("artist", "")
-            if mini_btn:
-                mini_btn.text = "⏸"
-
-            # Переходим на экран плеера
-            self.sm.current = "player"
+        try:
+            log(f"play_track: {path}")
+            for i, t in enumerate(self.tracks):
+                if t["path"] == path:
+                    self.current_index = i
+                    self.current_track = t
+                    break
+            if self.player.play(path):
+                self.player.set_on_finish(self._on_track_finish)
+                self.sm.current = "player"
+        except Exception:
+            log_exception("play_track")
 
     def play_next(self):
-        if not self.tracks:
-            return
-        self.current_index = (self.current_index + 1) % len(self.tracks)
-        self.play_track(self.tracks[self.current_index]["path"])
+        try:
+            if not self.tracks:
+                return
+            self.current_index = (self.current_index + 1) % len(self.tracks)
+            self.play_track(self.tracks[self.current_index]["path"])
+        except Exception:
+            log_exception("play_next")
 
     def play_prev(self):
-        if not self.tracks:
-            return
-        self.current_index = (self.current_index - 1) % len(self.tracks)
-        self.play_track(self.tracks[self.current_index]["path"])
+        try:
+            if not self.tracks:
+                return
+            self.current_index = (self.current_index - 1) % len(self.tracks)
+            self.play_track(self.tracks[self.current_index]["path"])
+        except Exception:
+            log_exception("play_prev")
 
     def _on_track_finish(self):
-        Clock.schedule_once(lambda dt: self.play_next(), 0.5)
+        try:
+            Clock.schedule_once(lambda dt: self.play_next(), 0.5)
+        except Exception:
+            pass
 
 
 if __name__ == "__main__":
-    TuneApp().run()
+    try:
+        TuneApp().run()
+    except Exception:
+        log_exception("MAIN")
+        raise
