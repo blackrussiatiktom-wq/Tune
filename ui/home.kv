@@ -1,0 +1,258 @@
+<HomeScreen>:
+    canvas.before:
+        Color:
+            rgba: 0, 0, 0, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        orientation: "vertical"
+
+        # HEADER
+        BoxLayout:
+            size_hint_y: None
+            height: dp(56)
+            padding: (dp(16), dp(8))
+            spacing: dp(12)
+
+            Label:
+                text: "Tune ✦"
+                font_name: "Inter-Bold"
+                font_size: "26sp"
+                color: 1, 1, 1, 1
+                size_hint_x: 0.5
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            Widget:
+
+            Label:
+                text: "Офлайн"
+                font_name: "Inter-Medium"
+                font_size: "13sp"
+                color: 0.48, 0.24, 1, 1
+                size_hint_x: None
+                width: dp(60)
+
+            Label:
+                text: "⚙"
+                font_size: "22sp"
+                color: 0.7, 0.7, 0.78, 1
+                size_hint_x: None
+                width: dp(36)
+
+        # SEARCH
+        BoxLayout:
+            size_hint_y: None
+            height: dp(48)
+            padding: (dp(16), dp(4))
+            spacing: dp(8)
+
+            canvas.before:
+                Color:
+                    rgba: 0.06, 0.06, 0.09, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(24)]
+
+            Label:
+                text: "🔍"
+                font_size: "18sp"
+                size_hint_x: None
+                width: dp(36)
+                color: 0.55, 0.55, 0.68, 1
+
+            TextInput:
+                id: search_input
+                hint_text: "Поиск музыки"
+                font_name: "Inter-Regular"
+                font_size: "15sp"
+                foreground_color: 1, 1, 1, 1
+                background_color: 0, 0, 0, 0
+                cursor_color: 0.48, 0.24, 1, 1
+                hint_text_color: 0.4, 0.4, 0.5, 1
+
+        # BANNER
+        BoxLayout:
+            size_hint_y: None
+            height: dp(140)
+            padding: (dp(16), dp(8))
+
+            BoxLayout:
+                canvas.before:
+                    Color:
+                        rgba: 0.08, 0.05, 0.15, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [dp(20)]
+
+                padding: (dp(20), dp(16))
+
+                Label:
+                    text: "[b]Твоя музыка\nвсегда с тобой[/b]\n\nСлушай любимые треки\nбез интернета"
+                    markup: True
+                    font_name: "Inter-SemiBold"
+                    font_size: "16sp"
+                    color: 1, 1, 1, 1
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+        # 4 TILES
+        GridLayout:
+            cols: 4
+            size_hint_y: None
+            height: dp(100)
+            padding: (dp(16), dp(8))
+            spacing: dp(8)
+
+            Button:
+                text: "🎵\nВсе треки"
+                font_name: "Inter-Medium"
+                font_size: "12sp"
+                background_normal: ""
+                background_color: 0.06, 0.06, 0.09, 1
+                color: 1, 1, 1, 1
+
+            Button:
+                text: "❤️\nИзбранное"
+                font_name: "Inter-Medium"
+                font_size: "12sp"
+                background_normal: ""
+                background_color: 0.06, 0.06, 0.09, 1
+                color: 1, 1, 1, 1
+
+            Button:
+                text: "📋\nПлейлисты"
+                font_name: "Inter-Medium"
+                font_size: "12sp"
+                background_normal: ""
+                background_color: 0.06, 0.06, 0.09, 1
+                color: 1, 1, 1, 1
+
+            Button:
+                text: "⬇️\nЗагрузки"
+                font_name: "Inter-Medium"
+                font_size: "12sp"
+                background_normal: ""
+                background_color: 0.06, 0.06, 0.09, 1
+                color: 1, 1, 1, 1
+
+        # RECENT HEADER
+        BoxLayout:
+            size_hint_y: None
+            height: dp(40)
+            padding: (dp(16), dp(8))
+
+            Label:
+                text: "Недавно прослушанные"
+                font_name: "Inter-SemiBold"
+                font_size: "17sp"
+                color: 1, 1, 1, 1
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            Label:
+                text: ">"
+                font_size: "18sp"
+                color: 0.55, 0.55, 0.68, 1
+                size_hint_x: None
+                width: dp(20)
+
+        # TRACKS LIST
+        ScrollView:
+            id: tracks_scroll
+            BoxLayout:
+                id: tracks_box
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                padding: (dp(8), 0)
+                spacing: dp(2)
+
+        # MINI-PLAYER
+        BoxLayout:
+            size_hint_y: None
+            height: dp(64)
+            padding: (dp(16), dp(8))
+            spacing: dp(12)
+
+            canvas.before:
+                Color:
+                    rgba: 0.06, 0.06, 0.09, 1
+                RoundedRectangle:
+                    pos: self.pos
+                    size: self.size
+                    radius: [dp(16)]
+
+            Image:
+                source: "assets/icon.png"
+                size_hint: (None, None)
+                size: dp(48), dp(48)
+
+            BoxLayout:
+                orientation: "vertical"
+
+                Label:
+                    id: mini_title
+                    text: "Ничего не играет"
+                    font_name: "Inter-SemiBold"
+                    font_size: "14sp"
+                    color: 1, 1, 1, 1
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+                Label:
+                    id: mini_artist
+                    text: "Выбери трек"
+                    font_name: "Inter-Regular"
+                    font_size: "12sp"
+                    color: 0.55, 0.55, 0.68, 1
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+            Button:
+                id: mini_play_btn
+                text: "▶"
+                font_size: "24sp"
+                size_hint_x: None
+                width: dp(48)
+                background_normal: ""
+                background_color: 0, 0, 0, 0
+                color: 1, 1, 1, 1
+
+        # BOTTOM MENU
+        BoxLayout:
+            size_hint_y: None
+            height: dp(64)
+
+            Button:
+                text: "🏠\nГлавная"
+                font_name: "Inter-Medium"
+                font_size: "11sp"
+                background_normal: ""
+                background_color: 0, 0, 0, 0
+                color: 0.48, 0.24, 1, 1
+
+            Button:
+                text: "🎵\nБиблиотека"
+                font_name: "Inter-Medium"
+                font_size: "11sp"
+                background_normal: ""
+                background_color: 0, 0, 0, 0
+                color: 0.55, 0.55, 0.68, 1
+
+            Button:
+                text: "👤\nПрофиль"
+                font_name: "Inter-Medium"
+                font_size: "11sp"
+                background_normal: ""
+                background_color: 0, 0, 0, 0
+                color: 0.55, 0.55, 0.68, 1
